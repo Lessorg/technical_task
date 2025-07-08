@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002
+      author: Mykola
+      changes:
+        - createTable:
+            tableName: fish_images
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: file_name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: fish_id
+                  type: INT
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: fish_images
+            baseColumnNames: fish_id
+            referencedTableName: fish
+            referencedColumnNames: id
+            constraintName: fk_fish_images_fish

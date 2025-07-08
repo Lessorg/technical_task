@@ -7,21 +7,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.multipart.MultipartFile;
-import technikal.task.fishmarket.exception.FailedToSaveImageException;
 import technikal.task.fishmarket.model.Fish;
 import technikal.task.fishmarket.dto.FishDto;
+import technikal.task.fishmarket.model.Image;
 import technikal.task.fishmarket.repository.FishRepository;
 import technikal.task.fishmarket.services.FishService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import technikal.task.fishmarket.services.ImageService;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -29,10 +23,12 @@ import java.util.List;
 public class FishServiceImpl implements FishService {
     private static final Logger logger = LoggerFactory.getLogger(FishServiceImpl.class);
     private final FishRepository fishRepository;
+    private final ImageService imageService;
 
     @Autowired
-    public FishServiceImpl(FishRepository fishRepository) {
+    public FishServiceImpl(FishRepository fishRepository, ImageService imageService) {
         this.fishRepository = fishRepository;
+        this.imageService = imageService;
     }
 
     public List<Fish> getFishListSortedById() {
@@ -54,20 +50,23 @@ public class FishServiceImpl implements FishService {
     }
 
     public Fish saveFish(FishDto fishDto, BindingResult result) {
-        List<String> storedFilenames = new ArrayList<>();
-        Date catchDate = new Date();
-
-        if (!isFishDtoImagesValid(fishDto.getImageFiles(), result)
-                || !saveImages(fishDto, catchDate, storedFilenames)) {
-            logger.error("Fish saving failed");
+        if (!isFishDtoImagesValid(fishDto.getImageFiles(), result)) {
+            logger.error("Fish saving failed due to image validation");
             return null;
         }
+
+        Date catchDate = new Date();
+        List<Image> images = imageService.storeImages(fishDto.getImageFiles(), catchDate);
 
         Fish fish = new Fish();
         fish.setCatchDate(catchDate);
         fish.setName(fishDto.getName());
         fish.setPrice(fishDto.getPrice());
-        fish.setImageFileNames(storedFilenames);
+        fish.setImages(images);
+
+        for (Image image : images) {
+            image.setFish(fish);
+        }
 
         Fish savedFish = fishRepository.save(fish);
         logger.info("Fish saved successfully with ID {}", savedFish.getId());
@@ -76,6 +75,7 @@ public class FishServiceImpl implements FishService {
 
     private boolean isFishDtoImagesValid (List<MultipartFile> images, BindingResult result) {
         logger.debug("Validating image files");
+
         if (images == null || images.stream().allMatch(MultipartFile::isEmpty)) {
             logger.warn("No images provided for fish");
             result.addError(new FieldError("fishDto", "imageFiles", "Потрібне фото рибки"));
@@ -83,32 +83,6 @@ public class FishServiceImpl implements FishService {
         }
 
         return true;
-    }
-
-    private boolean saveImages(FishDto fishDto, Date catchDate, List<String>  storedFilenames) {
-        try {
-            String uploadDir = "public/images/";
-            Path uploadPath = Paths.get(uploadDir);
-
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-                logger.debug("Created upload directory: {}", uploadPath.toAbsolutePath());
-            }
-
-            for (MultipartFile image : fishDto.getImageFiles()) {
-                if (!image.isEmpty()) {
-                    String storageFileName = catchDate.getTime() + "_" + image.getOriginalFilename();
-                    try (InputStream inputStream = image.getInputStream()) {
-                        Files.copy(inputStream, uploadPath.resolve(storageFileName), StandardCopyOption.REPLACE_EXISTING);
-                        storedFilenames.add(storageFileName);
-                        logger.info("Saved image file: {}", storageFileName);
-                    }
-                }
-            }
-            return true;
-        } catch (IOException e) {
-            throw new FailedToSaveImageException(e.getMessage());
-        }
     }
 
     private Fish findFishById(Integer id) {
