@@ -8,8 +8,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.multipart.MultipartFile;
 import technikal.task.fishmarket.exception.FailedToSaveImageException;
-import technikal.task.fishmarket.models.Fish;
-import technikal.task.fishmarket.models.FishDto;
+import technikal.task.fishmarket.model.Fish;
+import technikal.task.fishmarket.dto.FishDto;
 import technikal.task.fishmarket.repository.FishRepository;
 import technikal.task.fishmarket.services.FishService;
 import org.slf4j.Logger;
@@ -107,7 +107,6 @@ public class FishServiceImpl implements FishService {
             }
             return true;
         } catch (IOException e) {
-            logger.error("Failed to save images: {}", e.getMessage(), e);
             throw new FailedToSaveImageException(e.getMessage());
         }
     }
@@ -116,9 +115,6 @@ public class FishServiceImpl implements FishService {
         logger.info("Attempting to find fish with ID: {}", id);
 
         return fishRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.warn("Fish not found with ID: {}", id);
-                    return new EntityNotFoundException("Fish not found with id: " + id);
-                });
+                .orElseThrow(() -> new EntityNotFoundException("Fish not found with id: " + id));
     }
 }

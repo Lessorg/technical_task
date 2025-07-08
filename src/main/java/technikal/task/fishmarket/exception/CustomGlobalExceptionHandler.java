@@ -1,6 +1,8 @@
 package technikal.task.fishmarket.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -20,6 +22,7 @@ import java.util.Map;
 
 @ControllerAdvice
 public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(CustomGlobalExceptionHandler.class);
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
@@ -27,6 +30,8 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             HttpHeaders headers,
             HttpStatusCode status,
             WebRequest request) {
+
+        logger.warn("Validation failed: {}", ex.getMessage());
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.BAD_REQUEST);
@@ -40,6 +45,8 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     @ExceptionHandler(FailedToSaveImageException.class)
     public ResponseEntity<Object> handleRegistrationException(
             FailedToSaveImageException ex, WebRequest request) {
+
+        logger.error("Failed to save image: {}",ex.getMessage(), ex);
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.BAD_REQUEST);
@@ -50,6 +57,8 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Object> handleEntityNotFoundException(
             EntityNotFoundException ex, WebRequest request) {
+
+        logger.warn("Entity not found: {}", ex.getMessage());
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.NOT_FOUND);

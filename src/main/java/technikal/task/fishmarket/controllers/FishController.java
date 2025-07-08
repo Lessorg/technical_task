@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import jakarta.validation.Valid;
-import technikal.task.fishmarket.models.Fish;
-import technikal.task.fishmarket.models.FishDto;
+import technikal.task.fishmarket.model.Fish;
+import technikal.task.fishmarket.dto.FishDto;
 import technikal.task.fishmarket.services.FishService;
 
 @Controller

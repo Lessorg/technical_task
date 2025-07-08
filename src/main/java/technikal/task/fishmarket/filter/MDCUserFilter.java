@@ -1,4 +1,4 @@
-package technikal.task.fishmarket.configurations;
+package technikal.task.fishmarket.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,4 +1,4 @@
-package technikal.task.fishmarket.models;
+package technikal.task.fishmarket.model;
 
 import java.util.Date;
 import java.util.List;
